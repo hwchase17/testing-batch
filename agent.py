@@ -1,43 +1,44 @@
 from langchain_openai import ChatOpenAI
 from langgraph.graph import START, END, StateGraph
-from typing import TypedDict
+from typing import TypedDict, Annotated
 
-## Original implementation
-# rowwise_graph.py
+def reduce(a, b):
+    if a is None:
+        return b
+    else:
+        return a
+
+
 async def complaints_log(state):
-   llm = ChatOpenAI()
-   await llm.ainvoke("Hey")
+    llm = ChatOpenAI()
+    await llm.ainvoke("Hey")
 
-async def complaints_log1(state):
-   llm = ChatOpenAI()
-   await llm.ainvoke("Hey")
-
-async def complaints_log2(state):
-   llm = ChatOpenAI()
-   await llm.ainvoke("Hey")
-
-async def complaints_log3(state):
-   llm = ChatOpenAI()
-   await llm.ainvoke("Hey")
 
 class State1(TypedDict):
-   data: dict
+   data: Annotated[dict, reduce]
+
+
+graph0 = StateGraph(State1)
+graph0.add_node(complaints_log)
+graph0.add_edge(START, "complaints_log")
+graph0 = graph0.compile()
 
 
 graph1 = StateGraph(State1)
-graph1.add_node(complaints_log)
-graph1.add_node(complaints_log1)
-graph1.add_node(complaints_log2)
-graph1.add_node(complaints_log3)
-graph1.add_edge(START, "complaints_log")
-graph1.add_edge(START, "complaints_log1")
-graph1.add_edge(START, "complaints_log2")
-graph1.add_edge(START, "complaints_log3")
+graph1.add_node("s1", graph0)
+graph1.add_node("s2", graph0)
+graph1.add_node("s3", graph0)
+graph1.add_node("s4", graph0)
+graph1.add_edge(START, "s1")
+graph1.add_edge(START, "s2")
+graph1.add_edge(START, "s3")
+graph1.add_edge(START, "s4")
 graph1 = graph1.compile()
 
 
 async def process_rows(state):
     rows = [{"data": r} for r in state['rows']]
+    print(rows)
     await graph1.abatch(rows, config={"max_concurrency": 30})
 
 class State2(TypedDict):
